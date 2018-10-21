@@ -1,7 +1,7 @@
 const mqtt = require('mqtt') 
 const manuh = require('manuh')
 const ManuhBridge = require('./manuh-bridge/manuh-bridge').ManuhBridge
-const debug  = require('debug')('debug')
+const debug  = require('debug')('mqtt-provider-debug')
 
 
 module.exports = {
@@ -37,9 +37,9 @@ module.exports = {
             let host = hostArr[1]
             let context = ""
             if (hostArr[0].indexOf("https") != -1) {
-                proto = "https"
+                proto = "wss"
             }else if (hostArr[0].indexOf("http") != -1) {
-                proto = "http"
+                proto = "ws"
             }
 
             //port and host
@@ -63,18 +63,21 @@ module.exports = {
                 context = temp[1]
             }
 
-            const manuhMQTTBridgeConfig = {
+            const mqttConnectionConfig = {
                 protocol: proto,
                 host: host,
                 port: port,
                 context: context
             }
+            const brokerURL = `${mqttConnectionConfig.protocol}://${mqttConnectionConfig.host}:${mqttConnectionConfig.port}/${mqttConnectionConfig.context}`
             
-            debug('manuhMQTTBridgeConfig=',manuhMQTTBridgeConfig)
-            this.manuhBridge = new ManuhBridge(manuh, manuhMQTTBridgeConfig, () => {
+            debug('mqttConnectionConfig=',mqttConnectionConfig)
+            this.manuhBridge = new ManuhBridge(manuh, mqttConnectionConfig, () => {
 
+                debug('ManuhBridge connections completed.')
                 this.manuhBridge.subscribeRemote2LocalTopics([ this.baseTopic + "/#" ]); //connect to manuh        
-                this.mqttClient = mqtt.connect(mqttBrokerHost, mqttCredentials);
+                debug('Connecting directly to MQTT. brokerURL:', brokerURL)
+                this.mqttClient = mqtt.connect(brokerURL, mqttCredentials);
                 this.mqttClient.on('connect', function (connack) {                        
                     
                     if (!connack) {
