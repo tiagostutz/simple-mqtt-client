@@ -115,6 +115,7 @@ module.exports = {
         }
 
         const topicToSubscribe = this.baseTopic + "/" + topic        
+        manuh.unsubscribe(topicToSubscribe, subscriptionId) //avoid duplicated subs
         manuh.subscribe(topicToSubscribe, subscriptionId, function(msg, _){            
             if (typeof(msg) === "string") {
                 msg = JSON.parse(msg)
