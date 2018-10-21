@@ -11,6 +11,8 @@ First, install the lib:
 Then use it as follows:
 
 ```javascript
+    const mqttProvider = require('simple-mqtt-client')
+    
     mqttProvider.init("https://iot.eclipse.org/ws", "", "", "simple-mqtt-client/test", (mqttClient) => {
             
         mqttClient.subscribe("simpleTest", (msg) => {
