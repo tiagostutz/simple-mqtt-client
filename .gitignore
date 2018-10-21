@@ -1,7 +1,4 @@
 
-dist
-database-temp
-
 # Logs
 logs
 *.log
