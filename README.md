@@ -13,13 +13,13 @@ Then use it as follows:
 ```javascript
     mqttProvider.init("https://iot.eclipse.org/ws", "", "", "simple-mqtt-client/test", (mqttClient) => {
             
-            mqttClient.subscribe("simpleTest", (msg) => {
-                console.log("message:", msg.text)
-            })
+        mqttClient.subscribe("simpleTest", (msg) => {
+            console.log("message:", msg.text)
+        })
 
-            mqttClient.publish("simpleTest", { text: "HelloWorld!" })
+        mqttClient.publish("simpleTest", { text: "HelloWorld!" })
 
-        });
+    });
 ```
 
 The parameters you provide to the `init` function are:
