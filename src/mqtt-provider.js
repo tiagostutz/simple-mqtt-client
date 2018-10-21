@@ -1,7 +1,7 @@
 const mqtt = require('mqtt') 
 const manuh = require('manuh')
 const ManuhBridge = require('./manuh-bridge/manuh-bridge').ManuhBridge
-const logger  = require('console-server')
+const debug  = require('debug')('debug')
 
 
 module.exports = {
@@ -21,13 +21,13 @@ module.exports = {
                     password: mqttPassword
                 }
             }
-            logger.debug("Connecting to MQTT with: \nMQTT_BROKER_HOST="+mqttBrokerHost, 
+            debug("Connecting to MQTT with: \nMQTT_BROKER_HOST="+mqttBrokerHost, 
                                         "\nMQTT_USERNAME="+mqttUserName,
                                         "\nMQTT_PASSWORD="+mqttPassword,
                                         "\nMQTT_BASE_TOPIC="+mqttBaseTopic);            
                                         
             this.baseTopic = mqttBaseTopic || "chimpassist/demo"            
-            logger.debug("baseTopic:", this.baseTopic)
+            debug("baseTopic:", this.baseTopic)
             
 
             // Manuh Bridge MQTT config
@@ -70,7 +70,7 @@ module.exports = {
                 context: context
             }
             
-            logger.debug('manuhMQTTBridgeConfig=',manuhMQTTBridgeConfig)
+            debug('manuhMQTTBridgeConfig=',manuhMQTTBridgeConfig)
             this.manuhBridge = new ManuhBridge(manuh, manuhMQTTBridgeConfig, () => {
 
                 this.manuhBridge.subscribeRemote2LocalTopics([ this.baseTopic + "/#" ]); //connect to manuh        
@@ -84,10 +84,10 @@ module.exports = {
                     
                     if (_self.bootstrapStatus < 2) { //avoid calling every time the connection succeeds
                         _self.bootstrapStatus = 2 //bootstrap completed
-                        logger.debug("connection succeed. Details:",connack)
+                        debug("connection succeed. Details:",connack)
                         readyCB(_self)
                     }else{
-                        logger.debug("connected again. Details:",connack)
+                        debug("connected again. Details:",connack)
                     }                    
                 })
 

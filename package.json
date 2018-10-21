@@ -1,6 +1,6 @@
 {
   "name": "simple-mqtt-client",
-  "version": "0.2.1",
+  "version": "0.2.2",
   "description": "simlple mqtt client that links subscriptions directly to callback functions",
   "main": "dist/mqtt-provider.js",
   "scripts": {
@@ -28,7 +28,6 @@
   },
   "homepage": "https://github.com/tiagostutz/simple-mqtt-client#readme",
   "dependencies": {
-    "console-server": "^1.0.9",
     "debug": "^4.1.0",
     "manuh": "^1.3.4",
     "mqtt": "^2.18.8"
