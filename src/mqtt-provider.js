@@ -53,7 +53,7 @@ module.exports = {
                 }
             }
             //context and host
-            if (hostArr[1].indexOf("/") != -1) {
+            if (hostArr[1].indexOf("/") != -1 && hostArr[1].indexOf("/") != hostArr[1].length-1) {
                 let temp = hostArr[1].split("/")
                 if (temp[0].indexOf(":") != -1) {
                     host = temp[0].split(":")[0]
@@ -69,7 +69,7 @@ module.exports = {
                 port: port,
                 context: context
             }
-            const brokerURL = `${mqttConnectionConfig.protocol}://${mqttConnectionConfig.host}:${mqttConnectionConfig.port}/${mqttConnectionConfig.context}`
+            const brokerURL = `${mqttConnectionConfig.protocol}://${mqttConnectionConfig.host}${mqttConnectionConfig.port ? ":"+mqttConnectionConfig.port : ""}/${mqttConnectionConfig.context}`
             
             debug('mqttConnectionConfig=',mqttConnectionConfig)
             this.manuhBridge = new ManuhBridge(manuh, mqttConnectionConfig, () => {
