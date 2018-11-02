@@ -1,6 +1,6 @@
 const mqtt = require('mqtt') 
 const manuh = require('manuh')
-const ManuhBridge = require('./manuh-bridge/manuh-bridge').ManuhBridge
+const ManuhBridge = require('manuh-bridge').ManuhBridge
 const debug  = require('debug')('mqtt-provider-debug')
 
 
@@ -74,8 +74,7 @@ module.exports = {
             debug('mqttConnectionConfig=',mqttConnectionConfig)
             this.manuhBridge = new ManuhBridge(manuh, mqttConnectionConfig, () => {
 
-                debug('ManuhBridge connections completed.')
-                this.manuhBridge.subscribeRemote2LocalTopics([ this.baseTopic + "/#" ]); //connect to manuh        
+                debug('ManuhBridge connections completed.')                        
                 debug('Connecting directly to MQTT. brokerURL:', brokerURL)
                 this.mqttClient = mqtt.connect(brokerURL, mqttCredentials);
                 this.mqttClient.on('connect', function (connack) {                        
@@ -115,7 +114,12 @@ module.exports = {
         }
 
         const topicToSubscribe = this.baseTopic + "/" + topic        
-        manuh.unsubscribe(topicToSubscribe, subscriptionId) //avoid duplicated subs
+        this.manuhBridge.subscribeRemote2LocalTopics([ topicToSubscribe ]); //connect to manuh
+
+        //avoid duplicated subs for non-wildcard subscriptions
+        if (topicToSubscribe.indexOf("#") === -1 || topicToSubscribe.indexOf("+") === -1) {
+            manuh.unsubscribe(topicToSubscribe, subscriptionId)
+        }
         manuh.subscribe(topicToSubscribe, subscriptionId, function(msg, _){            
             if (typeof(msg) === "string") {
                 msg = JSON.parse(msg)

@@ -1,1 +1,84 @@
-"use strict";var _createClass=function(){function e(n,t){for(var i=0;i<t.length;i++){var e=t[i];e.enumerable=e.enumerable||!1,e.configurable=!0,"value"in e&&(e.writable=!0),Object.defineProperty(n,e.key,e)}}return function(n,t,i){return t&&e(n.prototype,t),i&&e(n,i),n}}();function _classCallCheck(n,t){if(!(n instanceof t))throw new TypeError("Cannot call a class as a function")}var mqtt=require("mqtt"),manuhLocal=require("manuh"),debug=require("debug")("debug"),info=require("debug")("mqttClient"),MqttClient=function(){function t(n){_classCallCheck(this,t),this.config=n,this.topics=[],this.subscriptions=[],this.connected=!1,this.config.clientId="mqtt2manuh_"+Math.random().toString(16).substr(2,8),this.id=0}return _createClass(t,[{key:"connect",value:function(n){var e=this;info("Connection config: ",this.config);var t=this.config.protocol+"://"+this.config.host+(this.config.port?":"+this.config.port:"")+"/"+this.config.context;info("==> Connecting to "+t+" (client ID "+this.config.clientId+")");var i=this.client=mqtt.connect(t);i.on("connect",function(){return debug("Connected. Now subscribing to topics"),e.topics.forEach(function(n){-1!==e.subscriptions.indexOf(n)&&debug("Topic "+n+" already subscribed. Ignoring..."),info("Subscribe to "+n),i.subscribe(n),e.subscriptions.push(n)}),e.connected?info("Connected ==> "):(e.connected=!0,info("Connected ==> "),n())}),i.on("reconnect",function(n){debug("Try to reconnect",n)}),i.on("offline",function(n){info("Broker is offline",n)}),i.on("error",function(n){info("error",n)}),i.on("message",function(n,t){e.id++,info("Message "+e.id+" '"+n+"'",t.toString());var i={topic:n,message:t.toString()};manuhLocal.publish("__message/mqtt/manuh",i,{retained:!1})})}},{key:"publish",value:function(n,t){0!=this.connected&&(info("Publish message "+n+" '"+t+"'"),this.client.publish(n.toString(),t.toString(),{qos:0,retain:!1}))}},{key:"subscribe",value:function(n){this.topics.push(n),this.connected&&(this.client.subscribe(n),this.subscriptions.push(n))}}]),t}();exports.MqttClient=MqttClient;
+const mqtt = require('mqtt');
+const manuhLocal = require('manuh');
+const debug = require('debug')('debug');
+const info = require('debug')('mqttClient');
+
+class MqttClient {
+
+    constructor(config){
+        this.config = config;
+        this.topics = [];
+        this.subscriptions = [];
+        this.connected = false;
+        this.config.clientId = 'mqtt2manuh_' + Math.random().toString(16).substr(2, 8);
+        this.id = 0;
+    }
+
+    connect(ready) {
+        info(`Connection config: `, this.config)
+        
+        const brokerURL = `${this.config.protocol}://${this.config.host}${this.config.port ? ":"+this.config.port : ""}/${this.config.context}`
+        info(`==> Connecting to ${brokerURL} (client ID ${this.config.clientId})`);
+        var client = this.client  = mqtt.connect(brokerURL);
+
+        client.on('connect', () => {
+
+            debug("Connected. Now subscribing to topics")
+            this.topics.forEach(t => {
+                if (this.subscriptions.indexOf(t) !== -1) { //prevent duplication overhead
+                    debug(`Topic ${t} already subscribed. Ignoring...`)
+                }
+                info(`Subscribe to ${t}`)
+                client.subscribe(t)
+                this.subscriptions.push(t)
+            });
+            if (!this.connected) {
+                this.connected = true; 
+                info('Connected ==> ');
+                return ready()
+            }
+            return info('Connected ==> ');
+        });
+        
+        client.on('reconnect', (e) => {
+            debug('Try to reconnect', e);
+        });
+
+        client.on('offline', (e) => {
+            info('Broker is offline', e);
+        });
+
+        client.on('error', (e) => {
+            info('error', e);
+        });
+
+        client.on('message', (topic, message) => {
+            this.id++;
+            info(`Message ${this.id} '${topic}'`, message.toString());
+
+            const msg = { topic: topic, message: message.toString() };
+            manuhLocal.publish('__message/mqtt/manuh', msg, { retained: false } );
+        });
+    }
+
+    publish(topic, message) {
+        if (this.connected == false) {
+            return;
+        }
+        info(`Publish message ${topic} '${message}'`);
+        this.client.publish(topic.toString(), message.toString(), {qos: 0, retain: false});
+    }
+
+    subscribe(topic) {
+        this.topics.push(topic);
+        if (!!this.connected) {
+            this.client.subscribe(topic);
+            this.subscriptions.push(topic)
+        }
+    }
+
+    
+
+}
+
+exports.MqttClient = MqttClient;

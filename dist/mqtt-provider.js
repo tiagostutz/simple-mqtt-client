@@ -1,1 +1,141 @@
-"use strict";var _typeof="function"==typeof Symbol&&"symbol"==typeof Symbol.iterator?function(t){return typeof t}:function(t){return t&&"function"==typeof Symbol&&t.constructor===Symbol&&t!==Symbol.prototype?"symbol":typeof t},mqtt=require("mqtt"),manuh=require("manuh"),ManuhBridge=require("./manuh-bridge/manuh-bridge").ManuhBridge,debug=require("debug")("mqtt-provider-debug");module.exports={init:function(e,o,i,n,r){var s=this;if(!e)throw console.error("mqttBrokerHost not FOUND!"),"mqttBrokerHost parameter is not set. Please provide a MQTT broker host to connect";var u=this;if(0!=this.bootstrapStatus)return r(u);this.bootstrapStatus=1;var a=void 0;o&&(a={username:o,password:i}),debug("Connecting to MQTT with: \nMQTT_BROKER_HOST="+e,"\nMQTT_USERNAME="+o,"\nMQTT_PASSWORD="+i,"\nMQTT_BASE_TOPIC="+n),this.baseTopic=n||"chimpassist/demo",debug("baseTopic:",this.baseTopic);var c=e.split("://"),d="mqtt",p=null,b=c[1],h="";if(-1!=c[0].indexOf("https")?d="wss":-1!=c[0].indexOf("http")&&(d="ws"),-1!=c[1].indexOf(":")){var l=c[1].split(":");b=l[0],p=-1!=l[1].indexOf("/")?l[1].split("/")[0]:l[1]}if(-1!=c[1].indexOf("/")&&c[1].indexOf("/")!=c[1].length-1){var m=c[1].split("/");b=-1!=m[0].indexOf(":")?m[0].split(":")[0]:m[0],h=m[1]}var f={protocol:d,host:b,port:p,context:h},g=f.protocol+"://"+f.host+(f.port?":"+f.port:"")+"/"+f.context;debug("mqttConnectionConfig=",f),this.manuhBridge=new ManuhBridge(manuh,f,function(){debug("ManuhBridge connections completed."),s.manuhBridge.subscribeRemote2LocalTopics([s.baseTopic+"/#"]),debug("Connecting directly to MQTT. brokerURL:",g),s.mqttClient=mqtt.connect(g,a),s.mqttClient.on("connect",function(e){e?u.bootstrapStatus<2?(u.bootstrapStatus=2,debug("connection succeed. Details:",e),r(u)):debug("connected again. Details:",e):console.error(t("Error connecting to interaction bus"))})})},publish:function(t,e){if(!this.isReady())throw"mqttProvider not yet initiated. Call `init` method with correspondent parameters";var o=this.baseTopic+"/"+t;if("object"!==(void 0===e?"undefined":_typeof(e)))throw"Could not publish non-objects to the chat mqtt provider";this.mqttClient.publish(o,JSON.stringify(e))},subscribe:function(t,o){var e=2<arguments.length&&void 0!==arguments[2]?arguments[2]:"mqtt-provider";if(!this.isReady())throw"mqttProvider not yet initiated. Call `init` method with correspondent parameters";var i=this.baseTopic+"/"+t;manuh.unsubscribe(i,e),manuh.subscribe(i,e,function(t,e){"string"==typeof t&&(t=JSON.parse(t)),o(t)})},unsubscribe:function(t){var e=1<arguments.length&&void 0!==arguments[1]?arguments[1]:"mqtt-provider",o=this.baseTopic+"/"+t;manuh.unsubscribe(o,e)},isReady:function(){return 2==this.bootstrapStatus},baseTopic:null,mqttClient:null,manuhBridge:null,bootstrapStatus:0};
+const mqtt = require('mqtt') 
+const manuh = require('manuh')
+const ManuhBridge = require('manuh-bridge').ManuhBridge
+const debug  = require('debug')('mqtt-provider-debug')
+
+
+module.exports = {
+    init: function(mqttBrokerHost, mqttUserName, mqttPassword, mqttBaseTopic, readyCB) {        
+        if (!mqttBrokerHost) {
+            console.error("mqttBrokerHost not FOUND!")
+            throw "mqttBrokerHost parameter is not set. Please provide a MQTT broker host to connect"
+        }
+
+        const _self = this
+        if (this.bootstrapStatus == 0) {
+            this.bootstrapStatus = 1 //running bootstrap
+            let mqttCredentials = undefined
+            if (mqttUserName) {
+                mqttCredentials = {
+                    username: mqttUserName,
+                    password: mqttPassword
+                }
+            }
+            debug("Connecting to MQTT with: \nMQTT_BROKER_HOST="+mqttBrokerHost, 
+                                        "\nMQTT_USERNAME="+mqttUserName,
+                                        "\nMQTT_PASSWORD="+mqttPassword,
+                                        "\nMQTT_BASE_TOPIC="+mqttBaseTopic);            
+                                        
+            this.baseTopic = mqttBaseTopic || "chimpassist/demo"            
+            debug("baseTopic:", this.baseTopic)
+            
+
+            // Manuh Bridge MQTT config
+            let hostArr = mqttBrokerHost.split("://")
+            let proto = "mqtt"
+            let port = null
+            let host = hostArr[1]
+            let context = ""
+            if (hostArr[0].indexOf("https") != -1) {
+                proto = "wss"
+            }else if (hostArr[0].indexOf("http") != -1) {
+                proto = "ws"
+            }
+
+            //port and host
+            if (hostArr[1].indexOf(":") != -1) {
+                let temp = hostArr[1].split(":")
+                host = temp[0]
+                if (temp[1].indexOf("/") != -1) {
+                    port = temp[1].split("/")[0]
+                }else{
+                    port = temp[1]
+                }
+            }
+            //context and host
+            if (hostArr[1].indexOf("/") != -1 && hostArr[1].indexOf("/") != hostArr[1].length-1) {
+                let temp = hostArr[1].split("/")
+                if (temp[0].indexOf(":") != -1) {
+                    host = temp[0].split(":")[0]
+                }else{
+                    host = temp[0]
+                }
+                context = temp[1]
+            }
+
+            const mqttConnectionConfig = {
+                protocol: proto,
+                host: host,
+                port: port,
+                context: context
+            }
+            const brokerURL = `${mqttConnectionConfig.protocol}://${mqttConnectionConfig.host}${mqttConnectionConfig.port ? ":"+mqttConnectionConfig.port : ""}/${mqttConnectionConfig.context}`
+            
+            debug('mqttConnectionConfig=',mqttConnectionConfig)
+            this.manuhBridge = new ManuhBridge(manuh, mqttConnectionConfig, () => {
+
+                debug('ManuhBridge connections completed.')                        
+                debug('Connecting directly to MQTT. brokerURL:', brokerURL)
+                this.mqttClient = mqtt.connect(brokerURL, mqttCredentials);
+                this.mqttClient.on('connect', function (connack) {                        
+                    
+                    if (!connack) {
+                        console.error(t("Error connecting to interaction bus"));
+                        return;
+                    }      
+                    
+                    if (_self.bootstrapStatus < 2) { //avoid calling every time the connection succeeds
+                        _self.bootstrapStatus = 2 //bootstrap completed
+                        debug("connection succeed. Details:",connack)
+                        readyCB(_self)
+                    }else{
+                        debug("connected again. Details:",connack)
+                    }                    
+                })
+
+            });                        
+        }else{
+            return readyCB(_self)
+        }
+    },
+    publish: function(topic, msg) {
+        if (!this.isReady()) {
+            throw "mqttProvider not yet initiated. Call `init` method with correspondent parameters"
+        }
+        const topicToPublish = this.baseTopic + "/" + topic
+        if (typeof(msg) !== "object") {
+            throw "Could not publish non-objects to the chat mqtt provider"
+        }
+        this.mqttClient.publish(topicToPublish, JSON.stringify(msg))
+    },
+    subscribe: function(topic, onMessageReceived, subscriptionId="mqtt-provider") {
+        if (!this.isReady()) {
+            throw "mqttProvider not yet initiated. Call `init` method with correspondent parameters"
+        }
+
+        const topicToSubscribe = this.baseTopic + "/" + topic        
+        this.manuhBridge.subscribeRemote2LocalTopics([ topicToSubscribe ]); //connect to manuh
+
+        //avoid duplicated subs for non-wildcard subscriptions
+        if (topicToSubscribe.indexOf("#") === -1 || topicToSubscribe.indexOf("+") === -1) {
+            manuh.unsubscribe(topicToSubscribe, subscriptionId)
+        }
+        manuh.subscribe(topicToSubscribe, subscriptionId, function(msg, _){            
+            if (typeof(msg) === "string") {
+                msg = JSON.parse(msg)
+            }
+            onMessageReceived(msg)              
+        })
+    },
+    unsubscribe: function(topic, subscriptionId="mqtt-provider") {
+        const topicToUnsubscribe = this.baseTopic + "/" + topic
+        manuh.unsubscribe(topicToUnsubscribe, subscriptionId)
+    },
+    isReady: function() {
+        return this.bootstrapStatus == 2;
+    },
+    baseTopic: null,
+    mqttClient: null,
+    manuhBridge: null,
+    bootstrapStatus: 0,
+}

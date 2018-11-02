@@ -1,1 +1,43 @@
-"use strict";var _createClass=function(){function i(n,t){for(var e=0;e<t.length;e++){var i=t[e];i.enumerable=i.enumerable||!1,i.configurable=!0,"value"in i&&(i.writable=!0),Object.defineProperty(n,i.key,i)}}return function(n,t,e){return t&&i(n.prototype,t),e&&i(n,e),n}}();function _classCallCheck(n,t){if(!(n instanceof t))throw new TypeError("Cannot call a class as a function")}var manuhLocal=require("manuh"),info=require("debug")("manuhClient"),ManuhClient=function(){function t(n){_classCallCheck(this,t),this.manuh=n,this.topics=[],this.connected=!1,this.clientId="manuh2mqtt_"+Math.random().toString(16).substr(2,8),this.id=0}return _createClass(t,[{key:"connect",value:function(){info("==> Connecting to manuh"),this.connected=!0}},{key:"publish",value:function(n,t){0!=this.connected&&(info("Publish message "+n+" '"+t+"'"),this.manuh.publish(n.toString(),t.toString(),{retained:!1}))}},{key:"subscribedFunctions",value:function(n,t){info("Message "+this.id+" '"+this+"'",n);var e={topic:this,message:n};manuhLocal.publish("__message/manuh/mqtt",e,{retained:!0})}},{key:"subscribe",value:function(n){this.topics.push(n),this.connected&&(info("Subscribed '"+n+"'"),this.manuh.subscribe(n,this.clientId,this.subscribedFunctions.bind(n)))}}]),t}();exports.ManuhClient=ManuhClient;
+const manuhLocal = require('manuh');
+const info = require('debug')('manuhClient');
+
+class ManuhClient {
+
+    constructor(manuh){
+        this.manuh = manuh;
+        this.topics = [];
+        this.connected = false;
+        this.clientId = 'manuh2mqtt_' + Math.random().toString(16).substr(2, 8);
+        this.id = 0;
+    }
+
+    connect() {
+        info(`==> Connecting to manuh`);
+        this.connected = true;
+    } 
+
+    publish(topic, message) {
+        if (this.connected == false) {
+            return;
+        }
+        info(`Publish message ${topic} '${message}'`);
+        this.manuh.publish(topic.toString(), message.toString(), { retained: false });
+    }
+
+    subscribedFunctions(message, inf) {
+        info(`Message ${this.id} '${this}'`, message);
+        const msg = { topic: this, message: message };
+        manuhLocal.publish('__message/manuh/mqtt', msg, { retained: true });
+    }
+
+    subscribe(topic) {
+        this.topics.push(topic);
+        if (this.connected) {
+            info(`Subscribed '${topic}'`);
+            this.manuh.subscribe(topic, this.clientId, this.subscribedFunctions.bind(topic));
+        }
+    }
+
+}
+
+exports.ManuhClient = ManuhClient;

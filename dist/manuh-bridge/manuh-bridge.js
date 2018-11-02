@@ -1,1 +1,49 @@
-"use strict";var _createClass=function(){function i(e,n){for(var t=0;t<n.length;t++){var i=n[t];i.enumerable=i.enumerable||!1,i.configurable=!0,"value"in i&&(i.writable=!0),Object.defineProperty(e,i.key,i)}}return function(e,n,t){return n&&i(e.prototype,n),t&&i(e,t),e}}();function _classCallCheck(e,n){if(!(e instanceof n))throw new TypeError("Cannot call a class as a function")}var manuhLocal=require("manuh"),info=require("debug")("ManuhBridge"),MqttClient=require("./modules/mqtt.js").MqttClient,ManuhClient=require("./modules/manuh.js").ManuhClient,ManuhBridge=function(){function u(e,n,t){_classCallCheck(this,u),this.__manuhClient=new ManuhClient(e),this.__mqttClient=new MqttClient(n);var i=this;manuhLocal.subscribe("__message/manuh/mqtt","id",function(e,n){i.__mqttClient.publish(e.topic,e.message)}),manuhLocal.subscribe("__message/mqtt/manuh","id",function(e,n){i.__manuhClient.publish(e.topic,e.message)}),this.__mqttClient.connect(function(){i.__manuhClient.connect(),info("Connections Completed. Bridge ready to receive pub/sub."),t()})}return _createClass(u,[{key:"subscribeBridge",value:function(e){for(var n in e)this.__mqttClient.subscribe(e[n]),this.__manuhClient.subscribe(e[n])}},{key:"subscribeRemote2LocalTopics",value:function(e){for(var n in e)this.__mqttClient.subscribe(e[n])}},{key:"subscribeLocal2RemoteTopics",value:function(e){for(var n in e)this.__manuhClient.subscribe(e[n])}}]),u}();exports.ManuhBridge=ManuhBridge;
+const manuhLocal = require('manuh');
+const info = require('debug')('ManuhBridge');
+const MqttClient = require("./modules/mqtt.js").MqttClient;
+const ManuhClient = require("./modules/manuh.js").ManuhClient;
+
+class ManuhBridge {
+
+    constructor(manuh, mqttConfig, connectionsCompleted){
+        this.__manuhClient = new ManuhClient(manuh);
+        this.__mqttClient = new MqttClient(mqttConfig);
+
+        const _self = this
+        manuhLocal.subscribe('__message/manuh/mqtt', 'id', function(msg, info){
+            _self.__mqttClient.publish(msg.topic, msg.message);
+        });
+
+        manuhLocal.subscribe('__message/mqtt/manuh', 'id', function(msg, info){
+            _self.__manuhClient.publish(msg.topic, msg.message);
+        });
+
+        this.__mqttClient.connect(() => {
+            _self.__manuhClient.connect();
+            info("Connections Completed. Bridge ready to receive pub/sub.")
+            connectionsCompleted()
+        });
+    }
+
+    subscribeBridge(topics){
+        for(let index in topics){
+            this.__mqttClient.subscribe(topics[index]);
+            this.__manuhClient.subscribe(topics[index]);
+        }
+    }
+
+    subscribeRemote2LocalTopics(topics){
+        for(let index in topics){
+            this.__mqttClient.subscribe(topics[index]);
+        }
+    }
+
+    subscribeLocal2RemoteTopics(topics){
+        for(let index in topics){
+            this.__manuhClient.subscribe(topics[index]);
+        }
+    }
+
+}
+
+exports.ManuhBridge = ManuhBridge;
