@@ -1,6 +1,6 @@
 {
   "name": "simple-mqtt-client",
-  "version": "0.3.7",
+  "version": "0.3.8",
   "description": "simlple mqtt client that links subscriptions directly to callback functions",
   "main": "dist/mqtt-provider.js",
   "scripts": {

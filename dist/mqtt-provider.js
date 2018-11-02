@@ -115,11 +115,6 @@ module.exports = {
 
         const topicToSubscribe = this.baseTopic + "/" + topic        
         this.manuhBridge.subscribeRemote2LocalTopics([ topicToSubscribe ]); //connect to manuh
-
-        //avoid duplicated subs for non-wildcard subscriptions
-        if (topicToSubscribe.indexOf("#") === -1 || topicToSubscribe.indexOf("+") === -1) {
-            manuh.unsubscribe(topicToSubscribe, subscriptionId)
-        }
         manuh.subscribe(topicToSubscribe, subscriptionId, function(msg, _){            
             if (typeof(msg) === "string") {
                 msg = JSON.parse(msg)

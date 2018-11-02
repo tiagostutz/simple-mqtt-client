@@ -16,5 +16,18 @@ describe('TCP Connection - simple send/receive', () => {
             }, 30)
         });
     }).timeout(5000)
+
+    it("should receive a message from wildcard subscription using TCP connection.", (done) => {
+        mqttProvider.init("mqtt://localhost:1884", "", "", "simple-mqtt-client/test", (mqttClient) => {
+            
+            mqttClient.subscribe("simpleTestTCP/#", (msg) => {
+                assert.equal(msg.text, "HelloWorldWild!");            
+                done();
+            })
+            setTimeout(() => {
+                mqttClient.publish("simpleTestTCP/msg", { text: "HelloWorldWild!" })
+            }, 30)
+        });
+    }).timeout(5000)
   
 })
