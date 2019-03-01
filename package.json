@@ -1,12 +1,15 @@
 {
   "name": "simple-mqtt-client",
-  "version": "0.3.8",
+  "version": "1.0.0",
   "description": "simlple mqtt client that links subscriptions directly to callback functions",
   "main": "dist/mqtt-provider.js",
   "scripts": {
     "test": "mocha",
     "dist": "gulp dist"
   },
+  "files": [
+    "dist/mqtt-provider.js"
+  ],
   "repository": {
     "type": "git",
     "url": "git+https://github.com/tiagostutz/simple-mqtt-client.git"
@@ -28,14 +31,14 @@
   },
   "homepage": "https://github.com/tiagostutz/simple-mqtt-client#readme",
   "dependencies": {
-    "debug": "^4.1.0",
-    "manuh": "^1.3.4",
+    "manuh": "^1.4.1",
     "manuh-bridge": "^0.0.2",
     "mqtt": "^2.18.8"
   },
   "devDependencies": {
-    "babel-core": "^7.0.0",
+    "babel-core": "^6.26.3",
     "babel-preset-env": "^1.7.0",
+    "debug": "^4.1.0",
     "gulp": "^3.9.1",
     "gulp-babel": "^8.0.0",
     "gulp-uglify": "^3.0.0"

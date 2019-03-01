@@ -5,7 +5,7 @@ const mqttProvider = require('../src/mqtt-provider')
 describe('TCP Connection - simple send/receive', () => {
     
     it("should send and receive a message using TCP connection.", (done) => {
-        mqttProvider.init("mqtt://localhost:1884", "", "", "simple-mqtt-client/test", (mqttClient) => {
+        mqttProvider.new().init("mqtt://localhost:1884", "", "", "simple-mqtt-client/test", (mqttClient) => {
             
             mqttClient.subscribe("simpleTestTCP", (msg) => {
                 assert.equal(msg.text, "HelloWorld!");            
@@ -18,7 +18,7 @@ describe('TCP Connection - simple send/receive', () => {
     }).timeout(5000)
 
     it("should receive a message from wildcard subscription using TCP connection.", (done) => {
-        mqttProvider.init("mqtt://localhost:1884", "", "", "simple-mqtt-client/test", (mqttClient) => {
+        mqttProvider.new().init("mqtt://localhost:1884", "", "", "simple-mqtt-client/test", (mqttClient) => {
             
             mqttClient.subscribe("simpleTestTCP/#", (msg) => {
                 assert.equal(msg.text, "HelloWorldWild!");            

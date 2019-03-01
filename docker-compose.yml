@@ -1,0 +1,14 @@
+version: '3.7'
+
+services:
+
+  mqtt:
+    image: erlio/docker-vernemq
+    restart: always
+    network_mode: bridge
+    ports:
+      - 1884:1883
+      - 8084:8080
+    environment:
+      - DOCKER_VERNEMQ_ALLOW_ANONYMOUS=on
+      - DOCKER_VERNEMQ_LOG__CONSOLE__LEVEL=info

@@ -4,8 +4,8 @@ const ManuhBridge = require('manuh-bridge').ManuhBridge
 const debug  = require('debug')('mqtt-provider-debug')
 
 
-module.exports = {
-    init: function(mqttBrokerHost, mqttUserName, mqttPassword, mqttBaseTopic, readyCB) {        
+module.exports.new = () => new function() {
+    this.init = function(mqttBrokerHost, mqttUserName, mqttPassword, mqttBaseTopic, readyCB) {        
         if (!mqttBrokerHost) {
             console.error("mqttBrokerHost not FOUND!")
             throw "mqttBrokerHost parameter is not set. Please provide a MQTT broker host to connect"
@@ -97,8 +97,8 @@ module.exports = {
         }else{
             return readyCB(_self)
         }
-    },
-    publish: function(topic, msg) {
+    }
+    this.publish = function(topic, msg) {
         if (!this.isReady()) {
             throw "mqttProvider not yet initiated. Call `init` method with correspondent parameters"
         }
@@ -107,30 +107,31 @@ module.exports = {
             throw "Could not publish non-objects to the chat mqtt provider"
         }
         this.mqttClient.publish(topicToPublish, JSON.stringify(msg))
-    },
-    subscribe: function(topic, onMessageReceived, subscriptionId="mqtt-provider") {
+    }
+    this.subscribe = function(topic, onMessageReceived, subscriptionId="mqtt-provider") {
         if (!this.isReady()) {
             throw "mqttProvider not yet initiated. Call `init` method with correspondent parameters"
         }
 
         const topicToSubscribe = this.baseTopic + "/" + topic        
         this.manuhBridge.subscribeRemote2LocalTopics([ topicToSubscribe ]); //connect to manuh
+        manuh.unsubscribe(topicToSubscribe, subscriptionId) //avoid duplicated subs
         manuh.subscribe(topicToSubscribe, subscriptionId, function(msg, _){            
             if (typeof(msg) === "string") {
                 msg = JSON.parse(msg)
             }
             onMessageReceived(msg)              
         })
-    },
-    unsubscribe: function(topic, subscriptionId="mqtt-provider") {
+    }
+    this.unsubscribe = function(topic, subscriptionId="mqtt-provider") {
         const topicToUnsubscribe = this.baseTopic + "/" + topic
         manuh.unsubscribe(topicToUnsubscribe, subscriptionId)
-    },
-    isReady: function() {
+    }
+    this.isReady = function() {
         return this.bootstrapStatus == 2;
-    },
-    baseTopic: null,
-    mqttClient: null,
-    manuhBridge: null,
-    bootstrapStatus: 0,
+    }
+    this.baseTopic = null
+    this.mqttClient = null
+    this.manuhBridge = null
+    this.bootstrapStatus = 0
 }

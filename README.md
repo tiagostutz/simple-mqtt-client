@@ -13,7 +13,7 @@ Then use it as follows:
 ```javascript
     const mqttProvider = require('simple-mqtt-client')
     
-    mqttProvider.init("https://iot.eclipse.org/ws", "", "", "simple-mqtt-client/test", (mqttClient) => {
+    mqttProvider.new().init("https://iot.eclipse.org/ws", "", "", "simple-mqtt-client/test", (mqttClient) => {
             
         mqttClient.subscribe("simpleTest", (msg) => {
             console.log("message:", msg.text)
